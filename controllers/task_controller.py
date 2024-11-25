@@ -7,15 +7,11 @@ import mongoengine
 class TaskController:
     @staticmethod
     async def update_is_completed(user_id, id, status, limit):
-        if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
-            return (
-                jsonify({"message": "authorization failed"}),
-                401,
-            )
         if (
             len(id.strip()) == 0
             or not isinstance(status, bool)
             or not isinstance(limit, int)
+            or len(user_id.strip()) == 0
         ):
             errors = {}
             if len(id.strip()) == 0:
@@ -24,14 +20,21 @@ class TaskController:
                 errors["status"] = ["status must be boolean"]
             if not isinstance(limit, int):
                 errors["limit"] = ["limit must be an integer"]
+            if len(user_id.strip()) == 0:
+                errors["user_id"] = ["user id cannot be empty"]
             return (
                 jsonify(
                     {
-                        "message": "input cannot be empty or invalid",
+                        "message": "input invalid",
                         "errors": errors,
                     }
                 ),
                 400,
+            )
+        if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
+            return (
+                jsonify({"message": "authorization failed"}),
+                401,
             )
         if not (
             data_task := await TaskDatabase.update(
@@ -79,15 +82,11 @@ class TaskController:
 
     @staticmethod
     async def update_title_id(user_id, id, new_title, limit):
-        if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
-            return (
-                jsonify({"message": "authorization failed"}),
-                401,
-            )
         if (
             len(id.strip()) == 0
             or len(new_title.strip()) == 0
             or not isinstance(limit, int)
+            or len(user_id.strip()) == 0
         ):
             errors = {}
             if len(id.strip()) == 0:
@@ -96,16 +95,22 @@ class TaskController:
                 errors["new_title"] = ["new title cannot be empty"]
             if not isinstance(limit, int):
                 errors["limit"] = ["limit must be an integer"]
+            if len(user_id.strip()) == 0:
+                errors["user_id"] = ["user id cannot be empty"]
             return (
                 jsonify(
                     {
-                        "message": "input cannot be empty or invalid",
+                        "message": "input invalid",
                         "errors": errors,
                     }
                 ),
                 400,
             )
-
+        if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
+            return (
+                jsonify({"message": "authorization failed"}),
+                401,
+            )
         if not (data_task := await TaskDatabase.get("id", task_id=id, user_id=user_id)):
             return (jsonify({"message": "task not found", "data": {"id": id}}), 404)
         new_data_task = await TaskDatabase.update(
@@ -151,6 +156,13 @@ class TaskController:
 
     @staticmethod
     async def delete_task_all(user_id):
+        if len(user_id.strip()) == 0:
+            return jsonify(
+                {
+                    "message": "input invalid",
+                    "errors": {"user_id": ["user id cannot be empty"]},
+                }
+            )
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
                 jsonify({"message": "authorization failed"}),
@@ -169,25 +181,31 @@ class TaskController:
     @staticmethod
     async def delete_task_id(user_id, id, limit):
         try:
-            if not (
-                user_database := await UserDatabase.get("user_id", user_id=user_id)
+            if (
+                not isinstance(limit, int)
+                or len(id.strip()) == 0
+                or len(user_id.strip()) == 0
             ):
-                return jsonify({"message": "authorization failed"}), 401
-            if not isinstance(limit, int) or len(id.strip()) == 0:
                 errors = {}
                 if not isinstance(limit, int):
                     errors["limit"] = ["limit must be an integer"]
                 if len(id.strip()) == 0:
                     errors["id"] = ["id cannot be empty"]
+                if len(user_id.strip()) == 0:
+                    errors["user_id"] = ["user id cannot be empty"]
                 return (
                     jsonify(
                         {
-                            "message": "input cannot be empty or invalid",
+                            "message": "input invalid",
                             "errors": errors,
                         }
                     ),
                     400,
                 )
+            if not (
+                user_database := await UserDatabase.get("user_id", user_id=user_id)
+            ):
+                return jsonify({"message": "authorization failed"}), 401
 
             if not (
                 data_task := await TaskDatabase.get("id", task_id=id, user_id=user_id)
@@ -231,20 +249,17 @@ class TaskController:
 
     @staticmethod
     async def get_task_id(user_id, task_id):
+        if len(user_id.strip()) == 0 or len(task_id.strip()) == 0:
+            errors = {}
+            if len(user_id.strip()) == 0:
+                errors["user_id"] = ["user id cannot be empty"]
+            if len(task_id.strip()) == 0:
+                errors["id"] = ["id cannot be empty"]
+            return jsonify({"message": "input invalid", "errors": errors}), 400
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
                 jsonify({"message": "authorization failed"}),
                 401,
-            )
-        if len(task_id.strip()) == 0:
-            return (
-                jsonify(
-                    {
-                        "message": "input cannot be empty",
-                        "errors": {"id": ["id cannot be empty"]},
-                    }
-                ),
-                400,
             )
         if not (task := await TaskDatabase.get("id", user_id=user_id, task_id=task_id)):
             return (
@@ -268,6 +283,30 @@ class TaskController:
 
     @staticmethod
     async def get_task_title(user_id, title, limit):
+        if (
+            len(user_id.strip()) == 0
+            or len(title.strip()) == 0
+            or len(limit.strip()) == 0
+        ):
+            errors = {}
+            if len(user_id.strip()) == 0:
+                errors["user_id"] = ["user id cannot be empty"]
+            if len(title.strip()) == 0:
+                errors["title"] = ["title cannot be empty"]
+            if len(limit.strip()) == 0 or not limit.isdigit():
+                if len(limit.strip()) == 0:
+                    if "limit" in errors:
+                        errors["limit"].append("limit cannot be empty")
+                    if "limit" not in errors:
+                        errors["limit"] = []
+                        errors["limit"].append("limit cannot be empty")
+                if not limit.isdigit():
+                    if "limit" in errors:
+                        errors["limit"].append("limit must be an integer")
+                    if "limit" not in errors:
+                        errors["limit"] = []
+                        errors["limit"].append("limit must be an integer")
+            return jsonify({"message": "input invalid", "errors": errors}), 400
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
                 jsonify({"message": "authorization failed"}),

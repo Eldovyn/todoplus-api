@@ -11,8 +11,4 @@ async def user_register():
     email = data.get("email")
     username = data.get("username")
     password = data.get("password")
-    confirm_password = data.get("confirmPassword")
-    print(f"api request by {email}")
-    return await UserController().user_register(
-        email, username, password, confirm_password
-    )
+    return await UserController().user_register(email, username, password)
