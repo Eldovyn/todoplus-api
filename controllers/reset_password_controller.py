@@ -1,11 +1,85 @@
 from databases import ResetPasswordDatabase, UserDatabase
-from flask import jsonify, url_for
+from flask import jsonify, url_for, request, render_template, redirect
+from werkzeug.security import generate_password_hash
 import datetime
-from utils import TokenResetPassword
-from utils import send_email
+from utils import TokenResetPassword, send_email
+from config import todoplus_url
+import re
 
 
 class ResetPasswordController:
+    @staticmethod
+    async def user_reset_password_page(token):
+        valid_token = await TokenResetPassword.get(token)
+        created_at = datetime.datetime.now(datetime.timezone.utc).timestamp()
+        if request.method == "GET":
+            if (
+                not valid_token
+                or not "user_id" in valid_token
+                or not "created_at" in valid_token
+            ):
+                return jsonify({"message": "invalid token"}), 400
+            if not (
+                user := await ResetPasswordDatabase.get(
+                    "user_id", user_id=valid_token["user_id"]
+                )
+            ):
+                return jsonify({"message": "user not found"}), 404
+            else:
+                if user.token != token:
+                    return jsonify({"message": "invalid token"}), 400
+                if user.expired_at <= created_at:
+                    await ResetPasswordDatabase.delete(
+                        "user_id", user_id=valid_token["user_id"]
+                    )
+                    return jsonify({"message": "token expired"}), 400
+            return render_template("reset_password.html")
+        if request.method == "POST":
+            data = request.form
+            password = data.get("password")
+
+            errors = {}
+            if len(password.strip()) == 0:
+                if "password" in errors:
+                    errors["password"].append("password cant be empety")
+                else:
+                    errors["password"] = ["password cant be empety"]
+            if len(password) < 8:
+                if "password" in errors:
+                    errors["password"].append("minimum 8 characters")
+                else:
+                    errors["password"] = ["minimum 8 characters"]
+            if not re.search("[a-z]", password):
+                if "password" in errors:
+                    errors["password"].append("password must contain lowercase")
+                else:
+                    errors["password"] = ["password must contain lowercase"]
+            if not re.search("[A-Z]", password):
+                if "password" in errors:
+                    errors["password"].append("password must contain uppercase")
+                else:
+                    errors["password"] = ["password must contain uppercase"]
+            if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+                if "password" in errors:
+                    errors["password"].append("password contains special character(s)")
+                else:
+                    errors["password"] = ["password contains special character(s)"]
+            if not errors:
+                password = generate_password_hash(password)
+                await UserDatabase.update(
+                    "password", new_password=password, user_id=valid_token["user_id"]
+                )
+                await ResetPasswordDatabase.delete(
+                    "user_id", user_id=valid_token["user_id"]
+                )
+                return redirect(todoplus_url)
+            return render_template(
+                "reset_password.html",
+                errors=errors["password"],
+                error_length=len(errors["password"]),
+                password=password,
+            )
+
     @staticmethod
     async def user_reset_password(email):
         if len(email.strip()) == 0:

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-white">
+    <div class="border bg-gray-900 w-[40%] mx-auto rounded-md p-5 mt-[20rem]">
+        <p class="text-center text-white font-semibold">Thanks {{ username }} for your registration</p>
+        <img class="w-[10%] m-3 mx-auto" src="https://media.discordapp.net/attachments/1304773268858994718/1310858515967115274/verification.png?ex=6746bfa0&is=67456e20&hm=861d63af8c6e0fe5d8012e3dedc0ed7df9dc9ce45046ce1fbdf9379d8303e3cc&=&format=webp&quality=lossless" alt="">
+        <p class="text-gray-400 text-sm text-center">
+            your account has been successfully active
+        </p>
+        <div class="flex justify-end">
+            <a href="" class="underline font-semibold text-sm text-gray-400">Login</a>
+        </div>        
+    </div>
+
+    <script>
+        setTimeout(() => { window.location.href = "http://localhost:3000/login"; }, 5000);
+    </script>
+</body>
+
+</html>

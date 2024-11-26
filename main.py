@@ -1,5 +1,5 @@
 from flask import Flask
-from config import mongodb, mongodb_url, secret_key
+from config import mongodb, mongodb_url, secret_key, broker_url, result_backend
 from flask_mongoengine import MongoEngine
 from flask_jwt_extended import JWTManager
 from celery import Celery, Task
@@ -10,9 +10,8 @@ from api.task_api import task_router
 from api.me_api import me_router
 from api.update_profile_api import update_profile_router
 from api.reset_password_api import reset_password_router
-import smtplib
-from email.mime.text import MIMEText
-from models import ResetPasswordModel
+from api.account_active import account_active_router
+from models import ResetPasswordModel, UserModel
 import datetime
 
 
@@ -38,8 +37,8 @@ app.config["JWT_SECRET_KEY"] = secret_key
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config.from_mapping(
     CELERY=dict(
-        broker_url="redis://localhost:6379/0",
-        result_backend="redis://localhost:6379/0",
+        broker_url=broker_url,
+        result_backend=result_backend,
         task_ignore_result=True,
     ),
 )
@@ -78,16 +77,32 @@ async def add_cors_headers(response):
     return response
 
 
-# JWT Callback
+@jwt.user_identity_loader
+def user_identity_lookup(user):
+    return user.id
+
+
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    identity = jwt_data["sub"]
+    return UserModel.objects(id=identity, is_active=True).first()
+
+
 @jwt.invalid_token_loader
 def invalid_token_callback(error_message):
     return {"message": "authorization failed"}, 401
 
 
-# Register Blueprints
+@jwt.user_lookup_error_loader
+def missing_token_callback(jwt_header, jwt_data):
+    identity = jwt_data["sub"]
+    return {"message": "user account is inactive", "data": {"user_id": identity}}, 403
+
+
 app.register_blueprint(register_router)
 app.register_blueprint(login_router)
 app.register_blueprint(task_router)
 app.register_blueprint(me_router)
 app.register_blueprint(update_profile_router)
 app.register_blueprint(reset_password_router)
+app.register_blueprint(account_active_router)

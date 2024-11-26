@@ -1,9 +1,11 @@
-from databases import UserDatabase
+from databases import UserDatabase, AccountActiveDatabase
 from flask import jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import mongoengine
 from flask_jwt_extended import create_access_token
 import re
+from utils import TokenAccountActive, send_email
+import datetime
 
 
 class UserController:
@@ -210,7 +212,22 @@ class UserController:
             return jsonify({"message": "failed login", "data": {"email": email}}), 404
         if not check_password_hash(user.password, password):
             return jsonify({"message": "failed login", "data": {"email": email}}), 401
-        access_token = create_access_token(identity=user.id)
+        if not user.is_active:
+            return (
+                jsonify(
+                    {
+                        "message": "user inactive",
+                        "data": {
+                            "id": user.id,
+                            "username": user.username,
+                            "email": user.email,
+                            "is_active": user.is_active,
+                        },
+                    }
+                ),
+                403,
+            )
+        access_token = create_access_token(identity=user)
         return (
             jsonify(
                 {
@@ -220,6 +237,7 @@ class UserController:
                         "username": user.username,
                         "email": user.email,
                         "access_token": access_token,
+                        "is_active": user.is_active,
                     },
                 }
             ),
@@ -292,7 +310,12 @@ class UserController:
             jsonify(
                 {
                     "message": "success register",
-                    "data": {"username": user.username, "email": user.email},
+                    "data": {
+                        "username": user.username,
+                        "email": user.email,
+                        "is_active": user.is_active,
+                        "id": user.id,
+                    },
                 }
             ),
             201,
