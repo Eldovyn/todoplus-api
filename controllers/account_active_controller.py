@@ -2,6 +2,7 @@ from flask import jsonify, render_template
 import datetime
 from databases import AccountActiveDatabase, UserDatabase
 from utils import TokenAccountActive, send_email
+from config import todoplus_url
 
 
 class AccountActiveController:
@@ -111,4 +112,8 @@ class AccountActiveController:
         ):
             return jsonify({"message": "user not found"}), 404
         await AccountActiveDatabase.update("user_id", user_id=valid_token["user_id"])
-        return render_template("account_verification.html", username=user.user.username)
+        return render_template(
+            "account_verification.html",
+            username=user.user.username,
+            todoplus_url=todoplus_url,
+        )
