@@ -181,6 +181,7 @@ class TaskController:
                 "tasks": paginated_data,
                 "size": len(new_task),
                 "current_page": 1,
+                "per_page": per_page,
             }
         return jsonify(response), 201
 
@@ -261,6 +262,7 @@ class TaskController:
                 "tasks": paginated_data,
                 "size": len(data_task),
                 "current_page": 1,
+                "per_page": per_page,
             }
         return jsonify(response), 201
 
@@ -364,6 +366,7 @@ class TaskController:
                             "tasks": paginated_data,
                             "size": len(data_task),
                             "current_page": 1,
+                            "per_page": per_page,
                         },
                     }
                 ),
