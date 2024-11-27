@@ -13,7 +13,7 @@ async def task_page():
     data = request.args
     limit = data.get("limit", "0")
     current_page = data.get("current_page", "1")
-    per_page = data.get("per_page", "10")
+    per_page = data.get("per_page", "5")
     return await task_controllers.task_page(current_user, limit, current_page, per_page)
 
 
@@ -41,7 +41,7 @@ async def get_task_by_category(category):
         return await task_controllers.get_task_title(current_user, title, limit)
     if category == "id":
         return await task_controllers.get_task_id(current_user, task_id)
-    return jsonify({"message": "invalid category"}), 400
+    return jsonify({"message": "endpoint not found"}), 404
 
 
 @task_router.delete("/todoplus/task/<string:category>")
@@ -49,13 +49,15 @@ async def get_task_by_category(category):
 async def delete_task(category):
     current_user = get_jwt_identity()
     body = request.json
+    params = request.args
     id = body.get("id")
     limit = body.get("limit")
+    per_page = params.get("per_page", "5")
     if category == "id":
-        return await task_controllers.delete_task_id(current_user, id, limit)
+        return await task_controllers.delete_task_id(current_user, id, limit, per_page)
     elif category == "all":
         return await task_controllers.delete_task_all(current_user)
-    return jsonify({"message": "invalid category"}), 400
+    return jsonify({"message": "endpoint not found"}), 404
 
 
 @task_router.patch("/todoplus/task/<string:category>")
@@ -63,16 +65,18 @@ async def delete_task(category):
 async def update_task(category):
     current_user = get_jwt_identity()
     body = request.json
+    params = request.args
     id = body.get("id")
     new_title = body.get("new_title")
     limit = body.get("limit")
     status = body.get("status")
+    per_page = params.get("per_page", "5")
     if category == "title":
         return await task_controllers.update_title_id(
-            current_user, id, new_title, limit
+            current_user, id, new_title, limit, per_page
         )
     if category == "is_completed":
         return await task_controllers.update_is_completed(
-            current_user, id, status, limit
+            current_user, id, status, limit, per_page
         )
-    return jsonify({"message": "invalid category"}), 400
+    return jsonify({"message": "endpoint not found"}), 404

@@ -104,22 +104,26 @@ class TaskController:
         )
 
     @staticmethod
-    async def update_is_completed(user_id, id, status, limit):
-        if (
-            len(id.strip()) == 0
-            or not isinstance(status, bool)
-            or not isinstance(limit, int)
-            or len(user_id.strip()) == 0
-        ):
-            errors = {}
-            if len(id.strip()) == 0:
-                errors["id"] = ["id cannot be empty"]
-            if not isinstance(status, bool):
-                errors["status"] = ["status must be boolean"]
-            if not isinstance(limit, int):
-                errors["limit"] = ["limit must be an integer"]
-            if len(user_id.strip()) == 0:
-                errors["user_id"] = ["user id cannot be empty"]
+    async def update_is_completed(user_id, id, status, limit, per_page):
+        errors = {}
+        if len(id.strip()) == 0:
+            errors["id"] = ["id cannot be empty"]
+        if not isinstance(status, bool):
+            errors["status"] = ["status must be boolean"]
+        if not isinstance(limit, int):
+            errors["limit"] = ["limit must be an integer"]
+        if len(user_id.strip()) == 0:
+            errors["user_id"] = ["user id cannot be empty"]
+        if len(per_page.strip()) == 0:
+            errors["per_page"] = ["per page cannot be empty"]
+        if not per_page.isdigit():
+            if "per_page" in errors:
+                errors["per_page"].append("per page must be an integer")
+            else:
+                errors["per_page"] = ["per page must be an integer"]
+        else:
+            per_page = int(per_page)
+        if errors:
             return (
                 jsonify(
                     {
@@ -140,61 +144,67 @@ class TaskController:
             )
         ):
             return (jsonify({"message": "task not found", "data": {"id": id}}), 404)
+        response = {
+            "message": "success update task",
+            "data": {
+                "title": data_task.title,
+                "id": data_task.id,
+                "is_completed": data_task.is_completed,
+                "new_status": status,
+                "created_at": data_task.created_at,
+            },
+        }
         if new_task := await TaskDatabase.get("all", user_id=user_id, limit=limit):
-            return (
-                jsonify(
-                    {
-                        "message": "success update task",
-                        "data": {
-                            "id": data_task.id,
-                            "title": data_task.title,
-                            "created_at": data_task.created_at,
-                            "new_status": status,
-                            "is_completed": data_task.created_at,
-                        },
-                        "new_task": [
-                            {
-                                "title": i.title,
-                                "created_at": i.created_at,
-                                "id": i.id,
-                                "is_completed": i.is_completed,
-                            }
-                            for i in new_task
-                        ],
-                    }
-                ),
-                201,
-            )
-        return jsonify(
-            {
-                "message": "success update task",
-                "data": {
-                    "title": data_task.title,
-                    "id": data_task.id,
-                    "is_completed": data_task.is_completed,
-                    "new_status": status,
-                    "created_at": data_task.created_at,
-                },
+            data_task = [
+                {
+                    "id": task.id,
+                    "title": task.title,
+                    "is_completed": task.is_completed,
+                    "created_at": task.created_at,
+                }
+                for task in new_task
+            ]
+            paginated_data = [
+                data_task[i : i + per_page] for i in range(0, len(data_task), per_page)
+            ]
+            response["new_task"] = [
+                {
+                    "title": i.title,
+                    "created_at": i.created_at,
+                    "id": i.id,
+                    "is_completed": i.is_completed,
+                }
+                for i in new_task
+            ]
+            response["page"] = {
+                "total_page": len(paginated_data),
+                "tasks": paginated_data,
+                "size": len(new_task),
+                "current_page": 1,
             }
-        )
+        return jsonify(response), 201
 
     @staticmethod
-    async def update_title_id(user_id, id, new_title, limit):
-        if (
-            len(id.strip()) == 0
-            or len(new_title.strip()) == 0
-            or not isinstance(limit, int)
-            or len(user_id.strip()) == 0
-        ):
-            errors = {}
-            if len(id.strip()) == 0:
-                errors["id"] = ["id cannot be empty"]
-            if len(new_title.strip()) == 0:
-                errors["new_title"] = ["new title cannot be empty"]
-            if not isinstance(limit, int):
-                errors["limit"] = ["limit must be an integer"]
-            if len(user_id.strip()) == 0:
-                errors["user_id"] = ["user id cannot be empty"]
+    async def update_title_id(user_id, id, new_title, limit, per_page):
+        errors = {}
+        if len(id.strip()) == 0:
+            errors["id"] = ["id cannot be empty"]
+        if len(new_title.strip()) == 0:
+            errors["new_title"] = ["new title cannot be empty"]
+        if not isinstance(limit, int):
+            errors["limit"] = ["limit must be an integer"]
+        if len(user_id.strip()) == 0:
+            errors["user_id"] = ["user id cannot be empty"]
+        if len(per_page.strip()) == 0:
+            errors["per_page"] = ["per page cannot be empty"]
+        if not per_page.isdigit():
+            if "per_page" in errors:
+                errors["per_page"].append("per page must be an integer")
+            else:
+                errors["per_page"] = ["per page must be an integer"]
+        else:
+            per_page = int(per_page)
+        if errors:
             return (
                 jsonify(
                     {
@@ -214,43 +224,45 @@ class TaskController:
         new_data_task = await TaskDatabase.update(
             "id", task_id=id, new_title=new_title, user_id=user_id
         )
+        response = {
+            "message": "success update task",
+            "data": {
+                "id": data_task.id,
+                "title": data_task.title,
+                "created_at": data_task.created_at,
+                "new_title": new_data_task.title,
+                "is_completed": data_task.created_at,
+            },
+        }
         if new_task := await TaskDatabase.get("all", user_id=user_id, limit=limit):
-            return (
-                jsonify(
-                    {
-                        "message": "success update task",
-                        "data": {
-                            "id": data_task.id,
-                            "title": data_task.title,
-                            "created_at": data_task.created_at,
-                            "new_title": new_data_task.title,
-                            "is_completed": data_task.created_at,
-                        },
-                        "new_task": [
-                            {
-                                "title": i.title,
-                                "created_at": i.created_at,
-                                "id": i.id,
-                                "is_completed": i.is_completed,
-                            }
-                            for i in new_task
-                        ],
-                    }
-                ),
-                201,
-            )
-        return jsonify(
-            {
-                "message": "success update task",
-                "data": {
-                    "title": data_task.title,
-                    "new_title": new_data_task.title,
-                    "id": data_task.id,
-                    "is_completed": data_task.is_completed,
-                    "created_at": data_task.created_at,
-                },
+            data_task = [
+                {
+                    "id": task.id,
+                    "title": task.title,
+                    "is_completed": task.is_completed,
+                    "created_at": task.created_at,
+                }
+                for task in new_task
+            ]
+            paginated_data = [
+                data_task[i : i + per_page] for i in range(0, len(data_task), per_page)
+            ]
+            response["new_task"] = [
+                {
+                    "title": i.title,
+                    "created_at": i.created_at,
+                    "id": i.id,
+                    "is_completed": i.is_completed,
+                }
+                for i in new_task
+            ]
+            response["page"] = {
+                "total_page": len(paginated_data),
+                "tasks": paginated_data,
+                "size": len(data_task),
+                "current_page": 1,
             }
-        )
+        return jsonify(response), 201
 
     @staticmethod
     async def delete_task_all(user_id):
@@ -277,20 +289,25 @@ class TaskController:
         )
 
     @staticmethod
-    async def delete_task_id(user_id, id, limit):
+    async def delete_task_id(user_id, id, limit, per_page):
         try:
-            if (
-                not isinstance(limit, int)
-                or len(id.strip()) == 0
-                or len(user_id.strip()) == 0
-            ):
-                errors = {}
-                if not isinstance(limit, int):
-                    errors["limit"] = ["limit must be an integer"]
-                if len(id.strip()) == 0:
-                    errors["id"] = ["id cannot be empty"]
-                if len(user_id.strip()) == 0:
-                    errors["user_id"] = ["user id cannot be empty"]
+            errors = {}
+            if not isinstance(limit, int):
+                errors["limit"] = ["limit must be an integer"]
+            if len(id.strip()) == 0:
+                errors["id"] = ["id cannot be empty"]
+            if len(user_id.strip()) == 0:
+                errors["user_id"] = ["user id cannot be empty"]
+            if len(per_page.strip()) == 0:
+                errors["per_page"] = ["per page cannot be empty"]
+            if not per_page.isdigit():
+                if "per_page" in errors:
+                    errors["per_page"].append("per page must be an integer")
+                else:
+                    errors["per_page"] = ["per page must be an integer"]
+            else:
+                per_page = int(per_page)
+            if errors:
                 return (
                     jsonify(
                         {
@@ -311,6 +328,18 @@ class TaskController:
                 return (jsonify({"message": "task not found", "data": {"id": id}}), 404)
             await TaskDatabase.delete("id", task_id=id, user_id=user_id)
             new_task = await TaskDatabase.get("all", user_id=user_id, limit=limit)
+            data_task = [
+                {
+                    "id": task.id,
+                    "title": task.title,
+                    "is_completed": task.is_completed,
+                    "created_at": task.created_at,
+                }
+                for task in new_task
+            ]
+            paginated_data = [
+                data_task[i : i + per_page] for i in range(0, len(data_task), per_page)
+            ]
             return (
                 jsonify(
                     {
@@ -330,6 +359,12 @@ class TaskController:
                             }
                             for i in new_task
                         ],
+                        "page": {
+                            "total_page": len(paginated_data),
+                            "tasks": paginated_data,
+                            "size": len(data_task),
+                            "current_page": 1,
+                        },
                     }
                 ),
                 201,
