@@ -6,6 +6,17 @@ task_router = Blueprint("task_router", __name__)
 task_controllers = TaskController()
 
 
+@task_router.get("/todoplus/task/page")
+@jwt_required()
+async def task_page():
+    current_user = get_jwt_identity()
+    data = request.args
+    limit = data.get("limit", "0")
+    current_page = data.get("current_page", "1")
+    per_page = data.get("per_page", "10")
+    return await task_controllers.task_page(current_user, limit, current_page, per_page)
+
+
 @task_router.post("/todoplus/task")
 @jwt_required()
 async def create_task():

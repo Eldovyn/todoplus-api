@@ -55,7 +55,7 @@ class AccountActiveController:
         expired_at = created_at + 300
         token = await TokenAccountActive.insert(f"{user.id}", int(created_at))
         await AccountActiveDatabase.insert(f"{user.id}", token, int(expired_at))
-        send_email(
+        await send_email(
             user.email,
             "Account Active",
             f"""<!DOCTYPE html>

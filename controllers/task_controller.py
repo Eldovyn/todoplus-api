@@ -6,6 +6,104 @@ import mongoengine
 
 class TaskController:
     @staticmethod
+    async def task_page(user_id, limit, current_page, per_page):
+        errors = {}
+        if len(user_id.strip()) == 0:
+            errors["user_id"] = ["user id cannot be empty"]
+        if len(limit.strip()) == 0 or not limit.isdigit():
+            errors["limit"] = ["limit must be an integer"]
+        if len(current_page.strip()) == 0 or not current_page.isdigit():
+            errors["current_page"] = ["current page must be an integer"]
+        if len(per_page.strip()) == 0 or not per_page.isdigit():
+            errors["per_page"] = ["per page must be an integer"]
+        if limit.isdigit():
+            try:
+                limit = int(limit)
+            except ValueError:
+                if "limit" in errors:
+                    errors["limit"].append("limit must be an integer")
+                else:
+                    errors["limit"] = ["limit must be an integer"]
+            else:
+                if limit < 0:
+                    if "limit" in errors:
+                        errors["limit"].append("limit must be greater than 0")
+                    else:
+                        errors["limit"] = ["limit must be greater than 0"]
+        if current_page.isdigit():
+            try:
+                current_page = int(current_page)
+            except ValueError:
+                if "current_page" in errors:
+                    errors["current_page"].append("current page must be an integer")
+                else:
+                    errors["current_page"] = ["current page must be an integer"]
+            else:
+                if current_page <= 0:
+                    if "current_page" in errors:
+                        errors["current_page"].append(
+                            "current page must be greater than 0"
+                        )
+                    else:
+                        errors["current_page"] = ["current page must be greater than 0"]
+        if per_page.isdigit():
+            try:
+                per_page = int(per_page)
+            except ValueError:
+                if "per_page" in errors:
+                    errors["per_page"].append("per page must be an integer")
+                else:
+                    errors["per_page"] = ["per page must be an integer"]
+            else:
+                if per_page <= 0:
+                    if "per_page" in errors:
+                        errors["per_page"].append("per page must be greater than 0")
+                    else:
+                        errors["per_page"] = ["per page must be greater than 0"]
+        if errors:
+            return jsonify({"message": "input invalid", "errors": errors}), 400
+        if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
+            return jsonify({"message": "authorization failed"}), 401
+        if not (
+            data_task := await TaskDatabase.get(
+                "all",
+                user_id=user_id,
+                limit=limit,
+            )
+        ):
+            return jsonify({"message": "task not found"}), 404
+        data_task = [
+            {
+                "id": task.id,
+                "title": task.title,
+                "is_completed": task.is_completed,
+                "created_at": task.created_at,
+            }
+            for task in data_task
+        ]
+        paginated_data = [
+            data_task[i : i + per_page] for i in range(0, len(data_task), per_page)
+        ]
+        return (
+            jsonify(
+                {
+                    "message": "success get task",
+                    "data": {
+                        "current_page": current_page,
+                        "limit": limit,
+                        "per_page": per_page,
+                    },
+                    "page": {
+                        "total_page": len(paginated_data),
+                        "tasks": paginated_data,
+                        "size": len(data_task),
+                    },
+                }
+            ),
+            200,
+        )
+
+    @staticmethod
     async def update_is_completed(user_id, id, status, limit):
         if (
             len(id.strip()) == 0
