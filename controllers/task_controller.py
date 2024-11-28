@@ -63,7 +63,7 @@ class TaskController:
         if errors:
             return jsonify({"message": "input invalid", "errors": errors}), 400
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
-            return jsonify({"message": "authorization failed"}), 401
+            return jsonify({"message": "authorization invalid"}), 401
         if not (
             data_task := await TaskDatabase.get(
                 "all",
@@ -135,7 +135,7 @@ class TaskController:
             )
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         if not (
@@ -143,7 +143,7 @@ class TaskController:
                 "status", task_id=id, user_id=user_id, status=status
             )
         ):
-            return (jsonify({"message": "task not found", "data": {"id": id}}), 404)
+            return (jsonify({"message": "task not found"}), 404)
         response = {
             "message": "success update task",
             "data": {
@@ -217,11 +217,11 @@ class TaskController:
             )
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         if not (data_task := await TaskDatabase.get("id", task_id=id, user_id=user_id)):
-            return (jsonify({"message": "task not found", "data": {"id": id}}), 404)
+            return (jsonify({"message": "task not found"}), 404)
         new_data_task = await TaskDatabase.update(
             "id", task_id=id, new_title=new_title, user_id=user_id
         )
@@ -277,7 +277,7 @@ class TaskController:
             )
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         await TaskDatabase.delete("user_id", user_id=user_id)
@@ -322,12 +322,12 @@ class TaskController:
             if not (
                 user_database := await UserDatabase.get("user_id", user_id=user_id)
             ):
-                return jsonify({"message": "authorization failed"}), 401
+                return jsonify({"message": "authorization invalid"}), 401
 
             if not (
                 data_task := await TaskDatabase.get("id", task_id=id, user_id=user_id)
             ):
-                return (jsonify({"message": "task not found", "data": {"id": id}}), 404)
+                return (jsonify({"message": "task not found"}), 404)
             await TaskDatabase.delete("id", task_id=id, user_id=user_id)
             new_task = await TaskDatabase.get("all", user_id=user_id, limit=limit)
             data_task = [
@@ -377,7 +377,6 @@ class TaskController:
                 jsonify(
                     {
                         "message": "task not found",
-                        "errors": {"id": id},
                     }
                 ),
                 404,
@@ -385,21 +384,21 @@ class TaskController:
 
     @staticmethod
     async def get_task_id(user_id, task_id):
-        if len(user_id.strip()) == 0 or len(task_id.strip()) == 0:
-            errors = {}
-            if len(user_id.strip()) == 0:
-                errors["user_id"] = ["user id cannot be empty"]
-            if len(task_id.strip()) == 0:
-                errors["id"] = ["id cannot be empty"]
+        errors = {}
+        if len(user_id.strip()) == 0:
+            errors["user_id"] = ["user id cannot be empty"]
+        if len(task_id.strip()) == 0:
+            errors["id"] = ["id cannot be empty"]
+        if errors:
             return jsonify({"message": "input invalid", "errors": errors}), 400
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         if not (task := await TaskDatabase.get("id", user_id=user_id, task_id=task_id)):
             return (
-                jsonify({"message": "task not found", "data": {"id": task_id}}),
+                jsonify({"message": "task not found"}),
                 404,
             )
         return (
@@ -419,33 +418,29 @@ class TaskController:
 
     @staticmethod
     async def get_task_title(user_id, title, limit):
-        if (
-            len(user_id.strip()) == 0
-            or len(title.strip()) == 0
-            or len(limit.strip()) == 0
-        ):
-            errors = {}
-            if len(user_id.strip()) == 0:
-                errors["user_id"] = ["user id cannot be empty"]
-            if len(title.strip()) == 0:
-                errors["title"] = ["title cannot be empty"]
-            if len(limit.strip()) == 0 or not limit.isdigit():
-                if len(limit.strip()) == 0:
-                    if "limit" in errors:
-                        errors["limit"].append("limit cannot be empty")
-                    if "limit" not in errors:
-                        errors["limit"] = []
-                        errors["limit"].append("limit cannot be empty")
-                if not limit.isdigit():
-                    if "limit" in errors:
-                        errors["limit"].append("limit must be an integer")
-                    if "limit" not in errors:
-                        errors["limit"] = []
-                        errors["limit"].append("limit must be an integer")
+        errors = {}
+        if len(user_id.strip()) == 0:
+            errors["user_id"] = ["user id cannot be empty"]
+        if len(title.strip()) == 0:
+            errors["title"] = ["title cannot be empty"]
+        if len(limit.strip()) == 0 or not limit.isdigit():
+            if len(limit.strip()) == 0:
+                if "limit" in errors:
+                    errors["limit"].append("limit cannot be empty")
+                if "limit" not in errors:
+                    errors["limit"] = []
+                    errors["limit"].append("limit cannot be empty")
+            if not limit.isdigit():
+                if "limit" in errors:
+                    errors["limit"].append("limit must be an integer")
+                if "limit" not in errors:
+                    errors["limit"] = []
+                    errors["limit"].append("limit must be an integer")
+        if errors:
             return jsonify({"message": "input invalid", "errors": errors}), 400
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         if not limit.isdigit():
@@ -485,7 +480,7 @@ class TaskController:
     async def get_task_all(user_id, limit):
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         if not limit.isdigit():
@@ -493,7 +488,6 @@ class TaskController:
                 jsonify(
                     {
                         "message": "limit must be an integer",
-                        "data": {"limit": limit},
                         "errors": {"limit": ["limit must be an integer"]},
                     }
                 ),
@@ -502,7 +496,7 @@ class TaskController:
         limit = int(limit)
         if not (task := await TaskDatabase.get("all", user_id=user_id, limit=limit)):
             return (
-                jsonify({"message": "task not found", "data": {"limit": limit}}),
+                jsonify({"message": "task not found"}),
                 404,
             )
         return (
@@ -542,7 +536,7 @@ class TaskController:
             )
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         task = await TaskDatabase.insert(
@@ -550,41 +544,28 @@ class TaskController:
             title,
             int(datetime.datetime.now(datetime.timezone.utc).timestamp()),
         )
+        response = {
+            "message": "success create task",
+            "data": {
+                "title": task.title,
+                "id": task.id,
+                "is_completed": task.is_completed,
+                "created_at": task.created_at,
+            },
+        }
         if new_task := await TaskDatabase.get("all", user_id=user_id, limit=limit):
-            return (
-                jsonify(
+            response["new_task"] = (
+                [
                     {
-                        "message": "success create task",
-                        "data": {
-                            "title": task.title,
-                            "id": task.id,
-                            "is_completed": task.is_completed,
-                            "created_at": task.created_at,
-                        },
-                        "new_task": [
-                            {
-                                "id": i.id,
-                                "title": i.title,
-                                "is_completed": i.is_completed,
-                                "created_at": i.created_at,
-                            }
-                            for i in new_task
-                        ],
+                        "id": i.id,
+                        "title": i.title,
+                        "is_completed": i.is_completed,
+                        "created_at": i.created_at,
                     }
-                ),
-                201,
+                    for i in new_task
+                ],
             )
         return (
-            jsonify(
-                {
-                    "message": "success create task",
-                    "data": {
-                        "title": task.title,
-                        "id": task.id,
-                        "is_completed": task.is_completed,
-                        "created_at": task.created_at,
-                    },
-                }
-            ),
+            jsonify(response),
             201,
         )

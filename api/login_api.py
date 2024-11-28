@@ -10,5 +10,4 @@ async def user_login():
     data = request.json
     email = data.get("email")
     password = data.get("password")
-    print(f"api request by {email}")
     return await UserController.user_login(email, password)

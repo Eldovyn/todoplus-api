@@ -18,7 +18,7 @@ class ResetPasswordController:
                 or not "user_id" in valid_token
                 or not "created_at" in valid_token
             ):
-                return jsonify({"message": "invalid token"}), 400
+                return jsonify({"message": "invalid token"}), 404
             if not (
                 user := await ResetPasswordDatabase.get(
                     "user_id", user_id=valid_token["user_id"]
@@ -27,12 +27,12 @@ class ResetPasswordController:
                 return jsonify({"message": "user not found"}), 404
             else:
                 if user.token != token:
-                    return jsonify({"message": "invalid token"}), 400
+                    return jsonify({"message": "invalid token"}), 404
                 if user.expired_at <= created_at:
                     await ResetPasswordDatabase.delete(
                         "user_id", user_id=valid_token["user_id"]
                     )
-                    return jsonify({"message": "token expired"}), 400
+                    return jsonify({"message": "token expired"}), 404
             return render_template("reset_password.html")
         if request.method == "POST":
             data = request.form
