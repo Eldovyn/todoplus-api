@@ -46,6 +46,15 @@ async def get_task_by_id():
     return await task_controllers.get_task_id(current_user, task_id)
 
 
+@task_router.get("/todoplus/task/all")
+@jwt_required()
+async def get_task_all():
+    current_user = get_jwt_identity()
+    data = request.args
+    limit = data.get("limit", "0")
+    return await task_controllers.get_task_all(current_user, limit)
+
+
 @task_router.delete("/todoplus/task/id")
 @jwt_required()
 async def delete_task_by_id():
