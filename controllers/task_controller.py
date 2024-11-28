@@ -554,17 +554,15 @@ class TaskController:
             },
         }
         if new_task := await TaskDatabase.get("all", user_id=user_id, limit=limit):
-            response["new_task"] = (
-                [
-                    {
-                        "id": i.id,
-                        "title": i.title,
-                        "is_completed": i.is_completed,
-                        "created_at": i.created_at,
-                    }
-                    for i in new_task
-                ],
-            )
+            response["new_task"] = [
+                {
+                    "id": i.id,
+                    "title": i.title,
+                    "is_completed": i.is_completed,
+                    "created_at": i.created_at,
+                }
+                for i in new_task
+            ]
         return (
             jsonify(response),
             201,
