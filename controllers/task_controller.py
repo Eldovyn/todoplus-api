@@ -39,7 +39,7 @@ class TaskController:
                 else:
                     errors["current_page"] = ["current page must be an integer"]
             else:
-                if current_page <= 0:
+                if current_page < 0:
                     if "current_page" in errors:
                         errors["current_page"].append(
                             "current page must be greater than 0"
@@ -330,7 +330,7 @@ class TaskController:
                 return (jsonify({"message": "task not found"}), 404)
             await TaskDatabase.delete("id", task_id=id, user_id=user_id)
             new_task = await TaskDatabase.get("all", user_id=user_id, limit=limit)
-            data_task = [
+            new_data_task = [
                 {
                     "id": task.id,
                     "title": task.title,
@@ -340,7 +340,8 @@ class TaskController:
                 for task in new_task
             ]
             paginated_data = [
-                data_task[i : i + per_page] for i in range(0, len(data_task), per_page)
+                new_data_task[i : i + per_page]
+                for i in range(0, len(new_data_task), per_page)
             ]
             return (
                 jsonify(
