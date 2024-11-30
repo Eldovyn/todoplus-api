@@ -352,6 +352,7 @@ class TaskController:
                             "created_at": data_task.created_at,
                             "id": data_task.id,
                             "is_completed": data_task.is_completed,
+                            "new_size": len(new_task),
                         },
                         "new_task": [
                             {
