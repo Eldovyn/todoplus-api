@@ -74,7 +74,7 @@ class TaskController:
             return jsonify({"message": "task not found"}), 404
         data_task = [
             {
-                "id": task.id,
+                "task_id": task.id,
                 "title": task.title,
                 "is_completed": task.is_completed,
                 "created_at": task.created_at,
@@ -89,14 +89,15 @@ class TaskController:
                 {
                     "message": "success get task",
                     "data": {
-                        "current_page": current_page,
-                        "limit": limit,
-                        "per_page": per_page,
+                        "user_id": user_id,
                     },
                     "page": {
                         "total_page": len(paginated_data),
                         "tasks": paginated_data,
                         "size": len(data_task),
+                        "current_page": current_page,
+                        "limit": limit,
+                        "per_page": per_page,
                     },
                 }
             ),
@@ -148,16 +149,17 @@ class TaskController:
             "message": "success update task",
             "data": {
                 "title": data_task.title,
-                "id": data_task.id,
+                "task_id": data_task.id,
                 "is_completed": data_task.is_completed,
                 "new_status": status,
                 "created_at": data_task.created_at,
+                "user_id": user_id,
             },
         }
         if new_task := await TaskDatabase.get("all", user_id=user_id, limit=limit):
             data_task = [
                 {
-                    "id": task.id,
+                    "task_id": task.id,
                     "title": task.title,
                     "is_completed": task.is_completed,
                     "created_at": task.created_at,
@@ -171,7 +173,7 @@ class TaskController:
                 {
                     "title": i.title,
                     "created_at": i.created_at,
-                    "id": i.id,
+                    "task_id": i.id,
                     "is_completed": i.is_completed,
                 }
                 for i in new_task
@@ -180,8 +182,9 @@ class TaskController:
                 "total_page": len(paginated_data),
                 "tasks": paginated_data,
                 "size": len(new_task),
-                "current_page": 1,
+                "current_page": 0,
                 "per_page": per_page,
+                "limit": limit,
             }
         return jsonify(response), 201
 
@@ -228,17 +231,18 @@ class TaskController:
         response = {
             "message": "success update task",
             "data": {
-                "id": data_task.id,
+                "task_id": data_task.id,
                 "title": data_task.title,
                 "created_at": data_task.created_at,
                 "new_title": new_data_task.title,
                 "is_completed": data_task.created_at,
+                "user_id": user_database.id,
             },
         }
         if new_task := await TaskDatabase.get("all", user_id=user_id, limit=limit):
             data_task = [
                 {
-                    "id": task.id,
+                    "task_id": task.id,
                     "title": task.title,
                     "is_completed": task.is_completed,
                     "created_at": task.created_at,
@@ -252,7 +256,7 @@ class TaskController:
                 {
                     "title": i.title,
                     "created_at": i.created_at,
-                    "id": i.id,
+                    "task_id": i.id,
                     "is_completed": i.is_completed,
                 }
                 for i in new_task
@@ -261,8 +265,9 @@ class TaskController:
                 "total_page": len(paginated_data),
                 "tasks": paginated_data,
                 "size": len(data_task),
-                "current_page": 1,
+                "current_page": 0,
                 "per_page": per_page,
+                "limit": limit,
             }
         return jsonify(response), 201
 
@@ -282,11 +287,7 @@ class TaskController:
             )
         await TaskDatabase.delete("user_id", user_id=user_id)
         return (
-            jsonify(
-                {
-                    "message": "success delete task",
-                }
-            ),
+            jsonify({"message": "success delete task", "data": {"user_id": user_id}}),
             201,
         )
 
@@ -332,7 +333,7 @@ class TaskController:
             new_task = await TaskDatabase.get("all", user_id=user_id, limit=limit)
             new_data_task = [
                 {
-                    "id": task.id,
+                    "task_id": task.id,
                     "title": task.title,
                     "is_completed": task.is_completed,
                     "created_at": task.created_at,
@@ -350,15 +351,15 @@ class TaskController:
                         "data": {
                             "title": data_task.title,
                             "created_at": data_task.created_at,
-                            "id": data_task.id,
+                            "task_id": data_task.id,
                             "is_completed": data_task.is_completed,
-                            "new_size": len(new_task),
+                            "user_id": user_database.id,
                         },
                         "new_task": [
                             {
                                 "title": i.title,
                                 "created_at": i.created_at,
-                                "id": i.id,
+                                "task_id": i.id,
                                 "is_completed": i.is_completed,
                             }
                             for i in new_task
@@ -367,8 +368,10 @@ class TaskController:
                             "total_page": len(paginated_data),
                             "tasks": paginated_data,
                             "size": len(data_task),
-                            "current_page": 1,
+                            "current_page": 0,
                             "per_page": per_page,
+                            "limit": limit,
+                            "new_size": len(new_task),
                         },
                     }
                 ),
@@ -408,10 +411,13 @@ class TaskController:
                 {
                     "message": "success get task",
                     "data": {
-                        "id": task.id,
-                        "title": task.title,
-                        "is_completed": task.is_completed,
-                        "created_at": task.created_at,
+                        "user_id": user_id,
+                        "task": {
+                            "task_id": task.id,
+                            "title": task.title,
+                            "is_completed": task.is_completed,
+                            "created_at": task.created_at,
+                        },
                     },
                 }
             ),
@@ -464,15 +470,20 @@ class TaskController:
             jsonify(
                 {
                     "message": "success get task",
-                    "data": [
-                        {
-                            "id": i.id,
-                            "title": i.title,
-                            "is_completed": i.is_completed,
-                            "created_at": i.created_at,
-                        }
-                        for i in task
-                    ],
+                    "data": {
+                        "user_id": user_id,
+                        "title": title,
+                        "limit": limit,
+                        "tasks": [
+                            {
+                                "task_id": i.id,
+                                "title": i.title,
+                                "is_completed": i.is_completed,
+                                "created_at": i.created_at,
+                            }
+                            for i in task
+                        ],
+                    },
                 }
             ),
             200,
@@ -505,15 +516,19 @@ class TaskController:
             jsonify(
                 {
                     "message": "success get task",
-                    "data": [
-                        {
-                            "id": i.id,
-                            "title": i.title,
-                            "is_completed": i.is_completed,
-                            "created_at": i.created_at,
-                        }
-                        for i in task
-                    ],
+                    "data": {
+                        "user_id": user_id,
+                        "limit": limit,
+                        "tasks": [
+                            {
+                                "task_id": i.id,
+                                "title": i.title,
+                                "is_completed": i.is_completed,
+                                "created_at": i.created_at,
+                            }
+                            for i in task
+                        ],
+                    },
                 }
             ),
             200,
@@ -550,15 +565,17 @@ class TaskController:
             "message": "success create task",
             "data": {
                 "title": task.title,
-                "id": task.id,
+                "task_id": task.id,
                 "is_completed": task.is_completed,
                 "created_at": task.created_at,
+                "user_id": user_id,
+                "limit": limit,
             },
         }
         if new_task := await TaskDatabase.get("all", user_id=user_id, limit=limit):
             response["new_task"] = [
                 {
-                    "id": i.id,
+                    "task_id": i.id,
                     "title": i.title,
                     "is_completed": i.is_completed,
                     "created_at": i.created_at,
