@@ -3,7 +3,7 @@ import smtplib
 from config import smtp_email, smtp_password, smtp_host, smtp_port
 
 
-def send_email(receiver_email, subject, body):
+async def send_email(receiver_email, subject, body):
     context = {"subject": subject, "body": body}
 
     html_message = MIMEText(context["body"], "html")

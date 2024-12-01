@@ -1,11 +1,5 @@
-from flask import Blueprint, request, jsonify, render_template, redirect
-from werkzeug.security import generate_password_hash
+from flask import Blueprint, request
 from controllers import ResetPasswordController
-from utils import TokenResetPassword
-from databases import UserDatabase, ResetPasswordDatabase
-import datetime
-from config import todoplus_url
-import re
 
 reset_password_router = Blueprint("reset_password_router", __name__)
 reset_password_controller = ResetPasswordController()

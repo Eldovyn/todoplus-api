@@ -11,7 +11,7 @@ class AccountActiveController:
         if len(user_id.strip()) == 0 or len(token.strip()) == 0:
             return jsonify({"message": "invalid token"}), 404
         if not (user := await AccountActiveDatabase.get("user_id", user_id=user_id)):
-            return '{"message": "user not found"}', 404
+            return jsonify({"message": "invalid token"}), 404
         if user.token != token:
             return jsonify({"message": "invalid token"}), 404
         return render_template("verification.html", email=user.user.email)
@@ -33,7 +33,7 @@ class AccountActiveController:
             )
         if not (user := await UserDatabase.get("email", email=email)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         if user.is_active:
@@ -55,7 +55,7 @@ class AccountActiveController:
         expired_at = created_at + 300
         token = await TokenAccountActive.insert(f"{user.id}", int(created_at))
         await AccountActiveDatabase.insert(f"{user.id}", token, int(expired_at))
-        send_email(
+        await send_email(
             user.email,
             "Account Active",
             f"""<!DOCTYPE html>

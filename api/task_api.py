@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from controllers import TaskController
 
@@ -16,52 +16,86 @@ async def create_task():
     return await task_controllers.add_task(current_user, title, limit)
 
 
-@task_router.get("/todoplus/task/<string:category>")
+@task_router.get("/todoplus/task/page")
 @jwt_required()
-async def get_task_by_category(category):
+async def get_task_page():
+    current_user = get_jwt_identity()
+    data = request.args
+    limit = data.get("limit", "0")
+    current_page = data.get("current_page", "0")
+    per_page = data.get("per_page", "5")
+    return await task_controllers.task_page(current_user, limit, current_page, per_page)
+
+
+@task_router.get("/todoplus/task/title")
+@jwt_required()
+async def get_task_by_title():
     current_user = get_jwt_identity()
     data = request.args
     limit = data.get("limit", "0")
     title = data.get("title", "")
-    task_id = data.get("id", "")
-    if category == "all":
-        return await task_controllers.get_task_all(current_user, limit)
-    if category == "title":
-        return await task_controllers.get_task_title(current_user, title, limit)
-    if category == "id":
-        return await task_controllers.get_task_id(current_user, task_id)
-    return jsonify({"message": "invalid category"}), 400
+    return await task_controllers.get_task_title(current_user, title, limit)
 
 
-@task_router.delete("/todoplus/task/<string:category>")
+@task_router.get("/todoplus/task/id")
 @jwt_required()
-async def delete_task(category):
+async def get_task_by_id():
+    current_user = get_jwt_identity()
+    data = request.args
+    task_id = data.get("id", "")
+    return await task_controllers.get_task_id(current_user, task_id)
+
+
+@task_router.get("/todoplus/task/all")
+@jwt_required()
+async def get_task_all():
+    current_user = get_jwt_identity()
+    data = request.args
+    limit = data.get("limit", "0")
+    return await task_controllers.get_task_all(current_user, limit)
+
+
+@task_router.delete("/todoplus/task/id")
+@jwt_required()
+async def delete_task_by_id():
     current_user = get_jwt_identity()
     body = request.json
     id = body.get("id")
     limit = body.get("limit")
-    if category == "id":
-        return await task_controllers.delete_task_id(current_user, id, limit)
-    elif category == "all":
-        return await task_controllers.delete_task_all(current_user)
-    return jsonify({"message": "invalid category"}), 400
+    per_page = request.args.get("per_page", "5")
+    return await task_controllers.delete_task_id(current_user, id, limit, per_page)
 
 
-@task_router.patch("/todoplus/task/<string:category>")
+@task_router.delete("/todoplus/task/all")
 @jwt_required()
-async def update_task(category):
+async def delete_all_tasks():
+    current_user = get_jwt_identity()
+    return await task_controllers.delete_task_all(current_user)
+
+
+@task_router.patch("/todoplus/task/title")
+@jwt_required()
+async def update_task_title():
     current_user = get_jwt_identity()
     body = request.json
     id = body.get("id")
     new_title = body.get("new_title")
     limit = body.get("limit")
+    per_page = request.args.get("per_page", "5")
+    return await task_controllers.update_title_id(
+        current_user, id, new_title, limit, per_page
+    )
+
+
+@task_router.patch("/todoplus/task/is_completed")
+@jwt_required()
+async def update_task_is_completed():
+    current_user = get_jwt_identity()
+    body = request.json
+    id = body.get("id")
     status = body.get("status")
-    if category == "title":
-        return await task_controllers.update_title_id(
-            current_user, id, new_title, limit
-        )
-    if category == "is_completed":
-        return await task_controllers.update_is_completed(
-            current_user, id, status, limit
-        )
-    return jsonify({"message": "invalid category"}), 400
+    limit = body.get("limit")
+    per_page = request.args.get("per_page", "5")
+    return await task_controllers.update_is_completed(
+        current_user, id, status, limit, per_page
+    )

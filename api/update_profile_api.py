@@ -28,15 +28,19 @@ async def update_profiles():
     return await user_controller.update_user(current_user, new_username, new_email)
 
 
-@update_profile_router.patch("/todoplus/profile/<string:category>")
+@update_profile_router.patch("/todoplus/profile/email")
 @jwt_required()
-async def update_profile(category):
+async def update_email():
     current_user = get_jwt_identity()
     data = request.json
     new_email = data.get("new_email")
+    return await user_controller.update_user_email(current_user, new_email)
+
+
+@update_profile_router.patch("/todoplus/profile/username")
+@jwt_required()
+async def update_username():
+    current_user = get_jwt_identity()
+    data = request.json
     new_username = data.get("new_username")
-    if category == "email":
-        return await user_controller.update_user_email(current_user, new_email)
-    elif category == "username":
-        return await user_controller.update_user_username(current_user, new_username)
-    return jsonify({"message": "invalid category"}), 400
+    return await user_controller.update_user_username(current_user, new_username)

@@ -90,7 +90,7 @@ def user_lookup_callback(_jwt_header, jwt_data):
 
 @jwt.invalid_token_loader
 def invalid_token_callback(error_message):
-    return {"message": "authorization failed"}, 401
+    return {"message": "authorization invalid"}, 401
 
 
 @jwt.user_lookup_error_loader

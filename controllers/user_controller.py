@@ -11,28 +11,24 @@ import datetime
 class UserController:
     @staticmethod
     async def update_password(user_id, new_password, confirm_password):
-        if (
-            len(new_password.strip()) == 0
-            or len(confirm_password.strip()) == 0
-            or new_password != confirm_password
-        ):
-            errors = {}
-            if len(new_password.strip()) == 0:
-                errors["password"] = ["password cannot be empty"]
-            if len(confirm_password.strip()) == 0:
-                if "confirm_password" in errors:
-                    errors["confirm_password"] = ["confirm_password cannot be empty"]
-                else:
-                    errors["confirm_password"] = ["confirm_password cannot be empty"]
-            if new_password != confirm_password:
-                if "confirm_password" in errors:
-                    errors["confirm_password"].append("confirm password not match")
-                else:
-                    errors["confirm_password"] = ["confirm password not match"]
+        errors = {}
+        if len(new_password.strip()) == 0:
+            errors["password"] = ["password cannot be empty"]
+        if len(confirm_password.strip()) == 0:
+            if "confirm_password" in errors:
+                errors["confirm_password"] = ["confirm_password cannot be empty"]
+            else:
+                errors["confirm_password"] = ["confirm_password cannot be empty"]
+        if new_password != confirm_password:
+            if "confirm_password" in errors:
+                errors["confirm_password"].append("confirm password not match")
+            else:
+                errors["confirm_password"] = ["confirm password not match"]
+        if errors:
             return (
                 jsonify(
                     {
-                        "message": "input is not valid",
+                        "message": "input invalid",
                         "errors": errors,
                     }
                 ),
@@ -40,7 +36,7 @@ class UserController:
             )
         if not (user := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         new_password = generate_password_hash(new_password)
@@ -64,16 +60,16 @@ class UserController:
 
     @staticmethod
     async def update_user(user_id, username, email):
-        if len(username.strip()) == 0 or len(email.strip()) == 0:
-            errors = {}
-            if len(username.strip()) == 0:
-                errors["new_username"] = ["username cannot be empty"]
-            if len(email.strip()) == 0:
-                errors["new_email"] = ["email cannot be empty"]
+        errors = {}
+        if len(username.strip()) == 0:
+            errors["new_username"] = ["username cannot be empty"]
+        if len(email.strip()) == 0:
+            errors["new_email"] = ["email cannot be empty"]
+        if errors:
             return (
                 jsonify(
                     {
-                        "message": "input cannot be empty",
+                        "message": "input invalid",
                         "errors": errors,
                     }
                 ),
@@ -81,7 +77,7 @@ class UserController:
             )
         if not (user := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         result = await UserDatabase.update(
@@ -108,7 +104,7 @@ class UserController:
         )
 
     @staticmethod
-    async def update_user_email(user_id, new_username):
+    async def update_user_username(user_id, new_username):
         if len(new_username.strip()) == 0:
             return (
                 jsonify(
@@ -121,7 +117,7 @@ class UserController:
             )
         if not (user := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         await UserDatabase.update(
@@ -157,7 +153,7 @@ class UserController:
             )
         if not (user := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         await UserDatabase.update("email", user_id=user_id, new_email=new_email)
@@ -181,7 +177,7 @@ class UserController:
     async def user_me(user_id):
         if not (user := await UserDatabase.get("user_id", user_id=user_id)):
             return (
-                jsonify({"message": "authorization failed"}),
+                jsonify({"message": "authorization invalid"}),
                 401,
             )
         return (
@@ -201,17 +197,20 @@ class UserController:
 
     @staticmethod
     async def user_login(email, password):
-        if len(email.strip()) == 0 or len(password.strip()) == 0:
-            errors = {}
-            if len(email.strip()) == 0:
-                errors["email"] = "email cannot be empty"
-            if len(password.strip()) == 0:
-                errors["password"] = "password cannot be empty"
-            return jsonify({"message": "input cannot be empty", "errors": errors}), 400
+        errors = {}
+        if len(email.strip()) == 0:
+            errors["email"] = "email cannot be empty"
+        if len(password.strip()) == 0:
+            errors["password"] = "password cannot be empty"
+        if errors:
+            return jsonify({"message": "input invalid", "errors": errors}), 400
         if not (user := await UserDatabase.get("email", email=email)):
-            return jsonify({"message": "failed login", "data": {"email": email}}), 404
+            return jsonify({"message": "failed login"}), 404
         if not check_password_hash(user.password, password):
-            return jsonify({"message": "failed login", "data": {"email": email}}), 401
+            return (
+                jsonify({"message": "authorization invalid", "data": {"email": email}}),
+                401,
+            )
         if not user.is_active:
             return (
                 jsonify(
@@ -282,7 +281,6 @@ class UserController:
                 errors["password"].append("password contains special character(s)")
             else:
                 errors["password"] = ["password contains special character(s)"]
-
         if errors:
             return (
                 jsonify(
