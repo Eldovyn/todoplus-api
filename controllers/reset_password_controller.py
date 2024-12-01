@@ -109,7 +109,7 @@ class ResetPasswordController:
                 jsonify({"message": "email not found"}),
                 404,
             )
-        send_email(
+        await send_email(
             email,
             "Reset Password TodoPlus",
             f"""<!DOCTYPE html>
