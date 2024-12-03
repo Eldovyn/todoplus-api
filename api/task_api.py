@@ -22,9 +22,8 @@ async def get_task_page():
     current_user = get_jwt_identity()
     data = request.args
     limit = data.get("limit", "0")
-    current_page = data.get("current_page", "0")
     per_page = data.get("per_page", "5")
-    return await task_controllers.task_page(current_user, limit, current_page, per_page)
+    return await task_controllers.task_page(current_user, limit, per_page)
 
 
 @task_router.get("/todoplus/task/title")
