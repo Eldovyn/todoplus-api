@@ -425,7 +425,7 @@ class TaskController:
         )
 
     @staticmethod
-    async def get_task_title(user_id, title, limit):
+    async def get_task_title(user_id, title, limit, current_page, per_page):
         errors = {}
         if len(user_id.strip()) == 0:
             errors["user_id"] = ["user id cannot be empty"]
@@ -444,8 +444,36 @@ class TaskController:
                 if "limit" not in errors:
                     errors["limit"] = []
                     errors["limit"].append("limit must be an integer")
+            if len(current_page.strip()) == 0 or not current_page.isdigit():
+                if len(current_page.strip()) == 0:
+                    if "current_page" in errors:
+                        errors["current_page"].append("current page cannot be empty")
+                    if "current_page" not in errors:
+                        errors["current_page"] = []
+                        errors["current_page"].append("current page cannot be empty")
+                if not current_page.isdigit():
+                    if "current_page" in errors:
+                        errors["current_page"].append("current page must be an integer")
+                    if "current_page" not in errors:
+                        errors["current_page"] = []
+                        errors["current_page"].append("current page must be an integer")
+            if len(per_page.strip()) == 0 or not per_page.isdigit():
+                if len(per_page.strip()) == 0:
+                    if "per_page" in errors:
+                        errors["per_page"].append("per page cannot be empty")
+                    if "per_page" not in errors:
+                        errors["per_page"] = []
+                        errors["per_page"].append("per page cannot be empty")
+                if not per_page.isdigit():
+                    if "per_page" in errors:
+                        errors["per_page"].append("per page must be an integer")
+                    if "per_page" not in errors:
+                        errors["per_page"] = []
+                        errors["per_page"].append("per page must be an integer")
         if errors:
             return jsonify({"message": "input invalid", "errors": errors}), 400
+        current_page = int(current_page)
+        per_page = int(per_page)
         if not (user_database := await UserDatabase.get("user_id", user_id=user_id)):
             return (
                 jsonify({"message": "authorization invalid"}),
@@ -466,6 +494,19 @@ class TaskController:
         task = await TaskDatabase.get(
             "title", user_id=user_id, title=title, limit=limit
         )
+        new_data_task = [
+            {
+                "task_id": task.id,
+                "title": task.title,
+                "is_completed": task.is_completed,
+                "created_at": task.created_at,
+            }
+            for task in task
+        ]
+        paginated_data = [
+            new_data_task[i : i + per_page]
+            for i in range(0, len(new_data_task), per_page)
+        ]
         return (
             jsonify(
                 {
@@ -483,6 +524,14 @@ class TaskController:
                             }
                             for i in task
                         ],
+                    },
+                    "page": {
+                        "total_page": len(paginated_data),
+                        "tasks": paginated_data,
+                        "size": len(task),
+                        "current_page": 0,
+                        "per_page": per_page,
+                        "limit": limit,
                     },
                 }
             ),
