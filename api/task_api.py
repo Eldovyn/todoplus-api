@@ -34,11 +34,8 @@ async def get_task_by_title():
     data = request.args
     limit = data.get("limit", "0")
     title = data.get("title", "")
-    current_page = data.get("current_page", "0")
     per_page = data.get("per_page", "5")
-    return await task_controllers.get_task_title(
-        current_user, title, limit, current_page, per_page
-    )
+    return await task_controllers.get_task_title(current_user, title, limit, per_page)
 
 
 @task_router.get("/todoplus/task/id")
