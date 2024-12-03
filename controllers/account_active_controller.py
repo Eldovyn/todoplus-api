@@ -1,7 +1,7 @@
 from flask import jsonify, render_template
 import datetime
 from databases import AccountActiveDatabase, UserDatabase
-from utils import TokenAccountActive, send_email
+from utils import TokenAccountActiveEmail, TokenAccountActiveWeb, send_email
 from config import todoplus_url
 
 
@@ -10,9 +10,13 @@ class AccountActiveController:
     async def user_account_active_page(user_id, token):
         if len(user_id.strip()) == 0 or len(token.strip()) == 0:
             return jsonify({"message": "invalid token"}), 404
-        if not (user := await AccountActiveDatabase.get("user_id", user_id=user_id)):
+        if not (
+            user := await AccountActiveDatabase.get(
+                "account_active", user_id=user_id, web_token=token
+            )
+        ):
             return jsonify({"message": "invalid token"}), 404
-        if user.token != token:
+        if user.web_token != token:
             return jsonify({"message": "invalid token"}), 404
         return render_template("verification.html", email=user.user.email)
 
@@ -53,8 +57,13 @@ class AccountActiveController:
             )
         created_at = datetime.datetime.now(datetime.timezone.utc).timestamp()
         expired_at = created_at + 300
-        token = await TokenAccountActive.insert(f"{user.id}", int(created_at))
-        await AccountActiveDatabase.insert(f"{user.id}", token, int(expired_at))
+        email_token = await TokenAccountActiveEmail.insert(
+            f"{user.id}", int(created_at)
+        )
+        web_token = await TokenAccountActiveWeb.insert(f"{user.id}", int(created_at))
+        await AccountActiveDatabase.insert(
+            f"{user.id}", email_token, web_token, int(expired_at)
+        )
         await send_email(
             user.email,
             "Account Active",
@@ -69,8 +78,8 @@ class AccountActiveController:
     <p>Hello {user.username},</p>
     <p>Someone has requested a link to verification your account, and you can do this through the link below.</p>
     <p>
-        <a href="http://localhost:5000/todoplus/account-active?token={token}">
-            http://localhost:5000/todoplus/account-active?token={token}
+        <a href="http://localhost:5000/todoplus/account-active?token={email_token}">
+            http://localhost:5000/todoplus/account-active?token={email_token}
         </a>
     </p>
     <p>If you didn't request this, please ignore this email.</p>
@@ -87,7 +96,7 @@ class AccountActiveController:
                         "username": user.username,
                         "email": user.email,
                         "is_active": user.is_active,
-                        "token": token,
+                        "token": web_token,
                     },
                 }
             ),
@@ -98,7 +107,7 @@ class AccountActiveController:
     async def user_account_active_verification(token):
         if len(token.strip()) == 0:
             return jsonify({"message": "invalid token"}), 404
-        valid_token = await TokenAccountActive.get(token)
+        valid_token = await TokenAccountActiveEmail.get(token)
         if (
             not valid_token
             or not "user_id" in valid_token
@@ -107,7 +116,9 @@ class AccountActiveController:
             return jsonify({"message": "invalid token"}), 404
         if not (
             user := await AccountActiveDatabase.get(
-                "user_id", user_id=valid_token["user_id"]
+                "account_active_email",
+                user_id=valid_token["user_id"],
+                email_token=token,
             )
         ):
             return jsonify({"message": "user not found"}), 404
