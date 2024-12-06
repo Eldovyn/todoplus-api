@@ -1,4 +1,4 @@
-from flask import jsonify, render_template
+from flask import jsonify, render_template, redirect
 import datetime
 from databases import AccountActiveDatabase, UserDatabase
 from utils import TokenAccountActiveEmail, TokenAccountActiveWeb, send_email
@@ -15,9 +15,9 @@ class AccountActiveController:
                 "account_active", user_id=user_id, web_token=token
             )
         ):
-            return jsonify({"message": "invalid token"}), 404
+            return redirect(todoplus_url)
         if user.web_token != token:
-            return jsonify({"message": "invalid token"}), 404
+            return redirect(todoplus_url)
         return render_template("verification.html", email=user.user.email)
 
     @staticmethod
@@ -121,7 +121,7 @@ class AccountActiveController:
                 email_token=token,
             )
         ):
-            return jsonify({"message": "user not found"}), 404
+            return redirect(todoplus_url)
         await AccountActiveDatabase.update("user_id", user_id=valid_token["user_id"])
         return render_template(
             "account_verification.html",
