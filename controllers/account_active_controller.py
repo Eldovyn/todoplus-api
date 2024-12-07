@@ -2,7 +2,7 @@ from flask import jsonify, render_template, redirect
 import datetime
 from databases import AccountActiveDatabase, UserDatabase
 from utils import TokenAccountActiveEmail, TokenAccountActiveWeb, send_email
-from config import todoplus_url
+from config import todoplus_url, todoplus_api_url
 
 
 class AccountActiveController:
@@ -78,8 +78,8 @@ class AccountActiveController:
     <p>Hello {user.username},</p>
     <p>Someone has requested a link to verification your account, and you can do this through the link below.</p>
     <p>
-        <a href="http://localhost:5000/todoplus/account-active?token={email_token}">
-            http://localhost:5000/todoplus/account-active?token={email_token}
+        <a href="{todoplus_api_url}todoplus/account-active?token={email_token}">
+            {todoplus_api_url}todoplus/account-active?token={email_token}
         </a>
     </p>
     <p>If you didn't request this, please ignore this email.</p>
