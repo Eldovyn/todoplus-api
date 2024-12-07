@@ -11,7 +11,7 @@ from api.me_api import me_router
 from api.update_profile_api import update_profile_router
 from api.reset_password_api import reset_password_router
 from api.account_active import account_active_router
-from models import ResetPasswordModel, UserModel
+from models import ResetPasswordModel, UserModel, AccountActiveModel
 import datetime
 
 
@@ -53,9 +53,13 @@ celery_app = celery_init_app(app)
 def periode_task():
     expired_at = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     if data := ResetPasswordModel.objects().all():
-        for item in data:
-            if item.expired_at <= expired_at:
-                item.delete()
+        for item1 in data:
+            if item1.expired_at >= expired_at:
+                item1.delete()
+    if data := AccountActiveModel.objects().all():
+        for item2 in data:
+            if item2.expired_at >= expired_at:
+                item2.delete()
     return "Task executed"
 
 

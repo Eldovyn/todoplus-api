@@ -1,11 +1,9 @@
-from databases import UserDatabase, AccountActiveDatabase
+from databases import UserDatabase
 from flask import jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import mongoengine
 from flask_jwt_extended import create_access_token
 import re
-from utils import TokenAccountActive, send_email
-import datetime
 
 
 class UserController:
