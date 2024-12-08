@@ -54,11 +54,11 @@ def periode_task():
     expired_at = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     if data := ResetPasswordModel.objects().all():
         for item1 in data:
-            if item1.expired_at >= expired_at:
+            if item1.expired_at <= expired_at:
                 item1.delete()
     if data := AccountActiveModel.objects().all():
         for item2 in data:
-            if item2.expired_at >= expired_at:
+            if item2.expired_at <= expired_at:
                 item2.delete()
     return "Task executed"
 
