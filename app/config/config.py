@@ -1,0 +1,22 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+mongodb = os.getenv("MONGODB")
+mongodb_url = os.getenv("MONGODB_URL")
+secret_key = os.getenv("SECRET_KEY_JWT")
+todoplus_url = os.getenv("TODOPLUS_URL")
+secret_key_reset_password = os.getenv("SECRET_KEY_RESET_PASSWORD")
+salt_reset_password = os.getenv("SALT_RESET_PASSWORD")
+secret_key_account_active_web = os.getenv("SECRET_KEY_ACCOUNT_ACTIVE_WEB")
+salt_account_active_web = os.getenv("SALT_ACCOUNT_ACTIVE_WEB")
+secret_key_account_active_email = os.getenv("SECRET_KEY_ACCOUNT_ACTIVE_EMAIL")
+salt_account_active_email = os.getenv("SALT_ACCOUNT_ACTIVE_EMAIL")
+smtp_email = os.getenv("SMTP_EMAIL")
+smtp_username = os.getenv("SMTP_USERNAME")
+smtp_password = os.getenv("SMTP_PASSWORD")
+smtp_host = os.getenv("SMTP_HOST")
+smtp_port = os.getenv("SMTP_PORT")
+broker_url = os.getenv("BROKER_URL")
+result_backend = os.getenv("RESULT_BACKEND")
