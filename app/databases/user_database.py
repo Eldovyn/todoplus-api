@@ -1,5 +1,5 @@
 from .database import Database
-from ..models import UserModel
+from ..models import UserModel, ApiKeyModel
 
 
 class UserDatabase(Database):

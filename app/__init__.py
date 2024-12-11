@@ -5,10 +5,11 @@ from .config import *
 from flask_jwt_extended import JWTManager
 from .models import UserModel
 from .celery_app import celery_init_app
-from .models import ResetPasswordModel, UserModel, AccountActiveModel
+from .models import ResetPasswordModel, UserModel, AccountActiveModel, ApiKeyModel
 from celery.schedules import crontab
 import datetime
 from flask_mail import Message
+from .utils import generate_api_key
 
 mail = None
 celery_app = None
@@ -48,8 +49,8 @@ def create_app():
     global celery_app
     celery_app = celery_init_app(app)
 
-    @celery_app.task(name="periode_task")
-    def periode_task():
+    @celery_app.task(name="delete_token_task")
+    def delete_token_task():
         expired_at = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
         if data := ResetPasswordModel.objects().all():
             for item1 in data:
@@ -61,10 +62,26 @@ def create_app():
                     item2.delete()
         return f"delete token at {int(datetime.datetime.now(datetime.timezone.utc).timestamp())}"
 
+    @celery_app.task(name="create_api_token_task")
+    def create_api_token_task():
+        for user in UserModel.objects().all():
+            try:
+                api_key_data = ApiKeyModel(user=user)
+                api_key = generate_api_key(user.username)
+                api_key_data.api_key = api_key
+                api_key_data.save()
+            except:
+                continue
+        return f"create api key at {int(datetime.datetime.now(datetime.timezone.utc).timestamp())}"
+
     celery_app.conf.beat_schedule = {
         "run-every-5-minutes": {
-            "task": "periode_task",
+            "task": "delete_token_task",
             "schedule": crontab(minute="*/5"),
+        },
+        "run-every-1-minutes": {
+            "task": "create_api_token_task",
+            "schedule": crontab(minute="*/1"),
         },
     }
 
