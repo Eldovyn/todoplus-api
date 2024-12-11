@@ -8,8 +8,10 @@ from .celery_app import celery_init_app
 from .models import ResetPasswordModel, UserModel, AccountActiveModel
 from celery.schedules import crontab
 import datetime
+from flask_mail import Message
 
-mail = Mail()
+mail = None
+celery_app = None
 
 
 def create_app():
@@ -18,7 +20,6 @@ def create_app():
     app.config["MONGODB_SETTINGS"] = {
         "db": mongodb,
         "host": mongodb_url,
-        "alias": "default",
     }
     app.config.from_mapping(
         CELERY=dict(
@@ -34,13 +35,17 @@ def create_app():
     app.config["MAIL_PORT"] = smtp_port
     app.config["MAIL_USE_TLS"] = True
     app.config["MAIL_USE_SSL"] = False
-    app.config["MAIL_USERNAME"] = smtp_username
+    app.config["MAIL_USERNAME"] = smtp_email
     app.config["MAIL_PASSWORD"] = smtp_password
     app.config["MAIL_DEFAULT_SENDER"] = smtp_email
 
     db = MongoEngine()
     db.init_app(app)
     jwt = JWTManager(app)
+    global mail
+    mail = Mail(app)
+
+    global celery_app
     celery_app = celery_init_app(app)
 
     @celery_app.task(name="periode_task")
@@ -54,7 +59,7 @@ def create_app():
             for item2 in data:
                 if item2.expired_at <= expired_at:
                     item2.delete()
-        return f"Task executed at {int(datetime.datetime.now(datetime.timezone.utc).timestamp())}"
+        return f"delete token at {int(datetime.datetime.now(datetime.timezone.utc).timestamp())}"
 
     celery_app.conf.beat_schedule = {
         "run-every-5-minutes": {
@@ -79,6 +84,16 @@ def create_app():
         app.register_blueprint(update_profile_router)
         app.register_blueprint(reset_password_router)
         app.register_blueprint(account_active_router)
+
+    @app.route("/")
+    def send_email():
+        msg = Message(
+            "Hello",
+            recipients=["bijofe@thetechnext.net"],
+            body="This is a test email sent from Flask-Mail!",
+        )
+        mail.send(msg)
+        return "Email sent succesfully!"
 
     @app.after_request
     async def add_cors_headers(response):
