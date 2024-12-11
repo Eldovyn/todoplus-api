@@ -11,9 +11,6 @@ import datetime
 from flask_mail import Message
 from .utils import generate_api_key
 
-mail = None
-celery_app = None
-
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
