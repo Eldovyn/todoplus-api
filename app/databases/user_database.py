@@ -1,5 +1,5 @@
 from .database import Database
-from ..models import UserModel, ApiKeyModel
+from ..models import UserModel, ApiKeyModel, AvatarModel
 from ..utils import generate_api_key
 
 
@@ -9,10 +9,10 @@ class UserDatabase(Database):
         with open(avatar, "rb") as f:
             avatar = f.read()
 
-        user = UserModel(
-            email=email, username=username, password=password, avatar=avatar
-        )
+        user = UserModel(email=email, username=username, password=password)
         user.save()
+        user_avatar = AvatarModel(user=user, avatar=avatar)
+        user_avatar.save()
         api_key = generate_api_key(user.username)
 
         if api_key_data := ApiKeyModel.objects(user=user).first():

@@ -1,15 +1,13 @@
-from flask import Flask, request, jsonify
+from flask import Flask
 from flask_mail import Mail
 from flask_mongoengine import MongoEngine
 from .config import *
 from flask_jwt_extended import JWTManager
 from .models import UserModel
 from .celery_app import celery_init_app
-from .models import ResetPasswordModel, UserModel, AccountActiveModel, ApiKeyModel
+from .models import ResetPasswordModel, UserModel, AccountActiveModel
 from celery.schedules import crontab
 import datetime
-from flask_mail import Message
-from .utils import generate_api_key
 
 
 def create_app():
@@ -74,6 +72,7 @@ def create_app():
         from .api.update_profile_api import update_profile_router
         from .api.reset_password_api import reset_password_router
         from .api.account_active import account_active_router
+        from .api.image_api import image_router
 
         app.register_blueprint(register_router)
         app.register_blueprint(login_router)
@@ -82,6 +81,7 @@ def create_app():
         app.register_blueprint(update_profile_router)
         app.register_blueprint(reset_password_router)
         app.register_blueprint(account_active_router)
+        app.register_blueprint(image_router)
 
     @app.after_request
     async def add_cors_headers(response):
