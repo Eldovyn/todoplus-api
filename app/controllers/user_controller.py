@@ -1,5 +1,5 @@
 from ..databases import UserDatabase
-from flask import jsonify
+from flask import jsonify, url_for
 import mongoengine
 from flask_jwt_extended import create_access_token
 import re
@@ -188,6 +188,7 @@ class UserController:
                         "username": user.username,
                         "email": user.email,
                         "is_active": user.is_active,
+                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.id, _external=True)}',
                     },
                 }
             ),

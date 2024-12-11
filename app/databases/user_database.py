@@ -33,6 +33,9 @@ class UserDatabase(Database):
             return UserModel.objects(email=email).first()
         if category == "user_id":
             return UserModel.objects(id=user_id).first()
+        if category == "avatar":
+            if user := UserModel.objects(id=user_id).first():
+                return AvatarModel.objects(user=user).first()
 
     @staticmethod
     async def delete():
