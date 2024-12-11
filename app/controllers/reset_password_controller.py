@@ -125,8 +125,8 @@ class ResetPasswordController:
     <p>Hello {user.username},</p>
     <p>Someone has requested a link to change your password, and you can do this through the link below.</p>
     <p>
-        <a href="http://localhost:5000{url_for('reset_password_router.link_reset_password', token=token)}">
-            http://localhost:5000{url_for('reset_password_router.link_reset_password', token=token)}
+        <a href="{url_for('reset_password_router.link_reset_password', token=token, _external=True)}">
+            Click here to reset your password
         </a>
     </p>
     <p>If you didn't request this, please ignore this email.</p>
