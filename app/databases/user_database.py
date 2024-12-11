@@ -5,8 +5,13 @@ from ..utils import generate_api_key
 
 class UserDatabase(Database):
     @staticmethod
-    async def insert(email, username, password):
-        user = UserModel(email=email, username=username, password=password)
+    async def insert(email, username, password, avatar):
+        with open(avatar, "rb") as f:
+            avatar = f.read()
+
+        user = UserModel(
+            email=email, username=username, password=password, avatar=avatar
+        )
         user.save()
         api_key = generate_api_key(user.username)
 

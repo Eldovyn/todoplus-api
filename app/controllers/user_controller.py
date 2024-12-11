@@ -245,7 +245,7 @@ class UserController:
         )
 
     @staticmethod
-    async def user_register(email, username, password):
+    async def user_register(email, username, password, avatar):
         from ..bcrypt import bcrypt
 
         errors = {}
@@ -296,7 +296,9 @@ class UserController:
             )
         result_password = bcrypt.generate_password_hash(password)
         try:
-            user, api_key = await UserDatabase.insert(email, username, result_password)
+            user, api_key = await UserDatabase.insert(
+                email, username, result_password, avatar
+            )
         except mongoengine.errors.NotUniqueError:
             return (
                 jsonify(

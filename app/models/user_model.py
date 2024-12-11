@@ -6,5 +6,6 @@ class UserModel(me.Document):
     email = me.StringField(required=True, unique=True)
     password = me.StringField(required=True)
     is_active = me.BooleanField(required=True, default=False)
+    avatar = me.BinaryField(required=True)
 
     meta = {"collection": "users"}

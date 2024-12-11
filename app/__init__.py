@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_mail import Mail
 from flask_mongoengine import MongoEngine
 from .config import *
@@ -59,26 +59,10 @@ def create_app():
                     item2.delete()
         return f"delete token at {int(datetime.datetime.now(datetime.timezone.utc).timestamp())}"
 
-    @celery_app.task(name="create_api_token_task")
-    def create_api_token_task():
-        for user in UserModel.objects().all():
-            try:
-                api_key_data = ApiKeyModel(user=user)
-                api_key = generate_api_key(user.username)
-                api_key_data.api_key = api_key
-                api_key_data.save()
-            except:
-                continue
-        return f"create api key at {int(datetime.datetime.now(datetime.timezone.utc).timestamp())}"
-
     celery_app.conf.beat_schedule = {
         "run-every-5-minutes": {
             "task": "delete_token_task",
             "schedule": crontab(minute="*/5"),
-        },
-        "run-every-1-minutes": {
-            "task": "create_api_token_task",
-            "schedule": crontab(minute="*/1"),
         },
     }
 
@@ -98,16 +82,6 @@ def create_app():
         app.register_blueprint(update_profile_router)
         app.register_blueprint(reset_password_router)
         app.register_blueprint(account_active_router)
-
-    @app.route("/")
-    def send_email():
-        msg = Message(
-            "Hello",
-            recipients=["bijofe@thetechnext.net"],
-            body="This is a test email sent from Flask-Mail!",
-        )
-        mail.send(msg)
-        return "Email sent succesfully!"
 
     @app.after_request
     async def add_cors_headers(response):
