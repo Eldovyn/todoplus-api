@@ -1,5 +1,6 @@
 from .database import Database
-from ..models import UserModel
+from ..models import UserModel, ApiKeyModel
+from ..utils import generate_api_key
 
 
 class UserDatabase(Database):
@@ -7,7 +8,17 @@ class UserDatabase(Database):
     async def insert(email, username, password):
         user = UserModel(email=email, username=username, password=password)
         user.save()
-        return user
+        api_key = generate_api_key(user.username)
+
+        if api_key_data := ApiKeyModel.objects(user=user).first():
+            api_key_data.api_key = api_key
+            api_key_data.save()
+            return user, api_key_data
+
+        api_key_data = ApiKeyModel(user=user, api_key=api_key)
+        api_key_data.save()
+
+        return user, api_key_data
 
     @staticmethod
     async def get(category, **kwargs):

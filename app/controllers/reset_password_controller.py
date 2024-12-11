@@ -2,9 +2,10 @@ from ..databases import ResetPasswordDatabase, UserDatabase
 from flask import jsonify, url_for, request, render_template, redirect
 from werkzeug.security import generate_password_hash
 import datetime
-from ..utils import TokenResetPassword, send_email
+from ..utils import TokenResetPassword
 from ..config import todoplus_url
 import re
+from ..task import send_email_task
 
 
 class ResetPasswordController:
@@ -109,10 +110,11 @@ class ResetPasswordController:
                 jsonify({"message": "email not found"}),
                 404,
             )
-        await send_email(
-            email,
-            "Reset Password TodoPlus",
-            f"""<!DOCTYPE html>
+        send_email_task.apply_async(
+            args=[
+                "Reset Password TodoPlus",
+                [user.email],
+                f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -132,6 +134,8 @@ class ResetPasswordController:
 </body>
 </html>
 """,
+                "reset password",
+            ],
         )
         return (
             jsonify(

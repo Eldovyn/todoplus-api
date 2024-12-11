@@ -2,7 +2,8 @@ from flask import jsonify, render_template, redirect
 import datetime
 from ..databases import AccountActiveDatabase, UserDatabase
 from ..utils import TokenAccountActiveEmail, TokenAccountActiveWeb
-from ..config import todoplus_url
+from ..config import todoplus_url, todoplus_api_url
+from ..task import send_email_task
 
 
 class AccountActiveController:
@@ -65,6 +66,32 @@ class AccountActiveController:
         web_token = await TokenAccountActiveWeb.insert(f"{user.id}", int(created_at))
         await AccountActiveDatabase.insert(
             f"{user.id}", email_token, web_token, int(expired_at)
+        )
+        send_email_task.apply_async(
+            args=[
+                "Account Active",
+                [user.email],
+                f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset</title>
+</head>
+<body>
+    <p>Hello {user.username},</p>
+    <p>Someone has requested a link to verify your account, and you can do this through the link below.</p>
+    <p>
+        <a href="{todoplus_api_url}todoplus/account-active?token={email_token}">
+            Click here to activate your account
+        </a>
+    </p>
+    <p>If you didn't request this, please ignore this email.</p>
+</body>
+</html>
+                """,
+                "account active",
+            ],
         )
         return (
             jsonify(

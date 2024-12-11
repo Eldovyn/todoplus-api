@@ -296,7 +296,7 @@ class UserController:
             )
         result_password = bcrypt.generate_password_hash(password)
         try:
-            user = await UserDatabase.insert(email, username, result_password)
+            user, api_key = await UserDatabase.insert(email, username, result_password)
         except mongoengine.errors.NotUniqueError:
             return (
                 jsonify(
