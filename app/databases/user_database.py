@@ -1,13 +1,18 @@
 from .database import Database
-from ..models import UserModel, ApiKeyModel
+from ..models import UserModel, ApiKeyModel, AvatarModel
 from ..utils import generate_api_key
 
 
 class UserDatabase(Database):
     @staticmethod
-    async def insert(email, username, password):
+    async def insert(email, username, password, avatar):
+        with open(avatar, "rb") as f:
+            avatar = f.read()
+
         user = UserModel(email=email, username=username, password=password)
         user.save()
+        user_avatar = AvatarModel(user=user, avatar=avatar)
+        user_avatar.save()
         api_key = generate_api_key(user.username)
 
         if api_key_data := ApiKeyModel.objects(user=user).first():
@@ -28,6 +33,9 @@ class UserDatabase(Database):
             return UserModel.objects(email=email).first()
         if category == "user_id":
             return UserModel.objects(id=user_id).first()
+        if category == "avatar":
+            if user := UserModel.objects(id=user_id).first():
+                return AvatarModel.objects(user=user).first()
 
     @staticmethod
     async def delete():

@@ -1,4 +1,4 @@
-from flask import jsonify, render_template, redirect
+from flask import jsonify, render_template, redirect, url_for
 import datetime
 from ..databases import AccountActiveDatabase, UserDatabase
 from ..utils import TokenAccountActiveEmail, TokenAccountActiveWeb
@@ -82,7 +82,7 @@ class AccountActiveController:
     <p>Hello {user.username},</p>
     <p>Someone has requested a link to verify your account, and you can do this through the link below.</p>
     <p>
-        <a href="{todoplus_api_url}todoplus/account-active?token={email_token}">
+        <a href="{url_for('account_active_router.account_active_email_verification', token=email_token, _external=True)}">
             Click here to activate your account
         </a>
     </p>

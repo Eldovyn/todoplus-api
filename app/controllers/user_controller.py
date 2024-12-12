@@ -1,5 +1,5 @@
 from ..databases import UserDatabase
-from flask import jsonify
+from flask import jsonify, url_for
 import mongoengine
 from flask_jwt_extended import create_access_token
 import re
@@ -188,6 +188,7 @@ class UserController:
                         "username": user.username,
                         "email": user.email,
                         "is_active": user.is_active,
+                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.id, _external=True)}',
                     },
                 }
             ),
@@ -245,7 +246,7 @@ class UserController:
         )
 
     @staticmethod
-    async def user_register(email, username, password):
+    async def user_register(email, username, password, avatar):
         from ..bcrypt import bcrypt
 
         errors = {}
@@ -296,7 +297,9 @@ class UserController:
             )
         result_password = bcrypt.generate_password_hash(password)
         try:
-            user, api_key = await UserDatabase.insert(email, username, result_password)
+            user, api_key = await UserDatabase.insert(
+                email, username, result_password, avatar
+            )
         except mongoengine.errors.NotUniqueError:
             return (
                 jsonify(
