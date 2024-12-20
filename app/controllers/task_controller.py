@@ -59,6 +59,7 @@ class TaskController:
                 "task_id": task.id,
                 "title": task.title,
                 "is_completed": task.is_completed,
+                "is_favorite": task.is_favorite,
                 "created_at": task.created_at,
             }
             for task in data_task
@@ -133,6 +134,7 @@ class TaskController:
                 "title": data_task.title,
                 "task_id": data_task.id,
                 "is_completed": data_task.is_completed,
+                "is_favorite": data_task.is_favorite,
                 "new_status": status,
                 "created_at": data_task.created_at,
                 "user_id": user_id,
@@ -144,6 +146,7 @@ class TaskController:
                     "task_id": task.id,
                     "title": task.title,
                     "is_completed": task.is_completed,
+                    "is_favorite": task.is_favorite,
                     "created_at": task.created_at,
                 }
                 for task in new_task
@@ -157,6 +160,7 @@ class TaskController:
                     "created_at": i.created_at,
                     "task_id": i.id,
                     "is_completed": i.is_completed,
+                    "is_favorite": i.is_favorite,
                 }
                 for i in new_task
             ]
@@ -218,6 +222,7 @@ class TaskController:
                 "created_at": data_task.created_at,
                 "new_title": new_data_task.title,
                 "is_completed": data_task.created_at,
+                "is_favorite": data_task.is_favorite,
                 "user_id": user_database.id,
             },
         }
@@ -227,6 +232,7 @@ class TaskController:
                     "task_id": task.id,
                     "title": task.title,
                     "is_completed": task.is_completed,
+                    "is_favorite": task.is_favorite,
                     "created_at": task.created_at,
                 }
                 for task in new_task
@@ -240,6 +246,7 @@ class TaskController:
                     "created_at": i.created_at,
                     "task_id": i.id,
                     "is_completed": i.is_completed,
+                    "is_favorite": i.is_favorite,
                 }
                 for i in new_task
             ]
@@ -318,6 +325,7 @@ class TaskController:
                     "task_id": task.id,
                     "title": task.title,
                     "is_completed": task.is_completed,
+                    "is_favorite": task.is_favorite,
                     "created_at": task.created_at,
                 }
                 for task in new_task
@@ -335,6 +343,7 @@ class TaskController:
                             "created_at": data_task.created_at,
                             "task_id": data_task.id,
                             "is_completed": data_task.is_completed,
+                            "is_favorite": data_task.is_favorite,
                             "user_id": user_database.id,
                         },
                         "new_task": [
@@ -343,6 +352,7 @@ class TaskController:
                                 "created_at": i.created_at,
                                 "task_id": i.id,
                                 "is_completed": i.is_completed,
+                                "is_favorite": i.is_favorite,
                             }
                             for i in new_task
                         ],
@@ -398,6 +408,7 @@ class TaskController:
                             "task_id": task.id,
                             "title": task.title,
                             "is_completed": task.is_completed,
+                            "is_favorite": task.is_favorite,
                             "created_at": task.created_at,
                         },
                     },
@@ -467,6 +478,7 @@ class TaskController:
                 "task_id": task.id,
                 "title": task.title,
                 "is_completed": task.is_completed,
+                "is_favorite": task.is_favorite,
                 "created_at": task.created_at,
             }
             for task in task
@@ -488,6 +500,7 @@ class TaskController:
                                 "task_id": i.id,
                                 "title": i.title,
                                 "is_completed": i.is_completed,
+                                "is_favorite": i.is_favorite,
                                 "created_at": i.created_at,
                             }
                             for i in task
@@ -541,6 +554,7 @@ class TaskController:
                                 "task_id": i.id,
                                 "title": i.title,
                                 "is_completed": i.is_completed,
+                                "is_favorite": i.is_favorite,
                                 "created_at": i.created_at,
                             }
                             for i in task
@@ -584,6 +598,7 @@ class TaskController:
                 "title": task.title,
                 "task_id": task.id,
                 "is_completed": task.is_completed,
+                "is_favorite": task.is_favorite,
                 "created_at": task.created_at,
                 "user_id": user_id,
                 "limit": limit,
@@ -595,6 +610,7 @@ class TaskController:
                     "task_id": i.id,
                     "title": i.title,
                     "is_completed": i.is_completed,
+                    "is_favorite": i.is_favorite,
                     "created_at": i.created_at,
                 }
                 for i in new_task
